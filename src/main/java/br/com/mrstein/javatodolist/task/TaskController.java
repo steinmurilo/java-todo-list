@@ -1,12 +1,12 @@
 package br.com.mrstein.javatodolist.task;
 
-import jakarta.servlet.http.HttpServlet;
+import br.com.mrstein.javatodolist.utils.Utils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.config.Task;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,10 +49,18 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public TaskModel update(@RequestBody TaskModel task, @PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity update(@RequestBody TaskModel task, @PathVariable UUID id, HttpServletRequest request) {
+
+        TaskModel taskFound = taskRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task to update not found"));
+
         Object idUser = request.getAttribute("idUser");
-        task.setIdUser((UUID) idUser);
-        task.setId(id);
-        return taskRepository.save(task);
+        if(!taskFound.getIdUser().equals(idUser)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User don't have permission to update this task");
+        }
+
+        Utils.copyNonNullProperties(task, taskFound);
+
+        return ResponseEntity.status(HttpStatus.OK).body(taskRepository.save(taskFound));
     }
 }

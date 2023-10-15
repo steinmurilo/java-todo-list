@@ -29,7 +29,7 @@ public class UserController {
         String cryptoPassword = BCrypt.withDefaults()
                 .hashToString(12, user.getPassword().toCharArray());
         user.setPassword(cryptoPassword);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userRepository.save(user));
+        return ResponseEntity.status(HttpStatus.OK).body(userRepository.save(user));
     }
 
 }
